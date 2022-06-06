@@ -67,7 +67,7 @@ def accurate_filter_transmitance(lambda_range,filter_thickness, \
                                  path_length = 56.547e-3, semi_diameter = 1.129e-3, \
                                  n = 1, R1 = 0.0625, R2 = 0.04, tilt = 0):
     
-    def mini_fabry_perot(theta, one_lambda):
+    def _mini_fabry_perot(theta, one_lambda):
         delta = (2*np.pi/one_lambda)*2*n*filter_thickness*np.cos(theta)
         geomean = np.sqrt(R1*R2)
         
@@ -84,17 +84,13 @@ def accurate_filter_transmitance(lambda_range,filter_thickness, \
     divisions = 100
     theta_increment = (theta_upper - theta_lower)/divisions
     theta_integral_vector = np.arange(theta_lower, theta_upper+theta_increment, theta_increment)
-    #t = time.perf_counter()
     for wavelength in tqdm(lambda_range):
         #####Trapezoidal Integration
-        I = mini_fabry_perot(theta_integral_vector, wavelength)
+        I = _mini_fabry_perot(theta_integral_vector, wavelength)
         I = (np.sum(I) - (I[0]+I[-1])/2)*theta_increment
         #I = intgr.trapz(I, dx = theta_increment) # If you want to be more "proper"
         transmitance_array.append(I)
-        #percent_complete = (wavelength- lambda_range[0])/(lambda_range[-1]- lambda_range[0])
-        #print("Integration is "+str(round(100*percent_complete, 3))+" % complete")
-    #print("Total integration time: "+str(round(time.perf_counter() - t,2))+" seconds")    
-    #normalisation is optional but recomended
+
     transmitance_array /= np.max(transmitance_array)
     return transmitance_array
 
@@ -694,7 +690,7 @@ acc_g_aligned_erf_peaks_w_analytic = peak_allignment(acc_gmean_erf_w, perfect_la
 # plt.grid()
 # plt.show()
 
-del c
+#del c
 #%%
 plt.close('all')
 

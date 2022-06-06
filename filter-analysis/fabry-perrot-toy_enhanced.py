@@ -5,14 +5,9 @@ Created on Sun Apr 25 02:05:23 2021
 @author: User
 """
 import numpy as np
-import matplotlib.pyplot as plt
-import scipy.signal as sci
-import scipy.stats as stat
-import scipy.integrate as intgr
-from astropy.modeling import models, fitting
-import time
 from Espresso import Perfect_Fabry_Perot, Simple_Filter, Realistic_Filter, Optical_System, white_light_generator
 
+#parameters for whitelight
 virtual_steps = 100000 #just how many increments we want for some range of numbers
 lambda_target = 600e-9 #[m]
 lambda_deviation = 0.3e-9 #[m]this varies depending on application    0.3e-9
@@ -42,13 +37,22 @@ c = 3e8
 
 whitelight = white_light_generator(lambda_min, lambda_max, virtual_steps)
 
+#subsystems of interest:
 fabry_perot = Perfect_Fabry_Perot(whitelight, etalon_spacing)
-fabry_perot.plot_transmitance()
 simple_filter = Simple_Filter(whitelight,filter_thickness)
-#simple_filter.plot_transmitance()
 real_filter = Realistic_Filter(whitelight, filter_thickness)
-#real_filter.plot_transmitance()
 
+#Ideal system
+optical_system_pure = Optical_System(whitelight, fabry_perot)
+optical_system_pure.plot_transmitance()
+optical_system_pure.generate_gaussian(increment, virtual_steps, lambda_target, sample_space, cuttoff, show = True)
+optical_system_pure.convolve_system(show = True)
+optical_system_pure.beat_pattern_pre_discretization(fabry_perot, c)
+optical_system_pure.discretize_system(resolution, increment, virtual_steps, show = True)
+optical_system_pure.gauss_peaks(show = True)
+optical_system_pure.beat_pattern(fabry_perot, c, show = True)
+
+#Realistic system
 optical_system = Optical_System(whitelight, fabry_perot, real_filter)
 optical_system.plot_transmitance()
 optical_system.generate_gaussian(increment, virtual_steps, lambda_target, sample_space, cuttoff, show = True)
@@ -58,33 +62,26 @@ optical_system.discretize_system(resolution, increment, virtual_steps, show = Tr
 optical_system.gauss_peaks(show = True)
 optical_system.beat_pattern(fabry_perot, c, show = True)
 
-# optical_system_pure = Optical_System(whitelight, fabry_perot)
-# optical_system_pure.plot_transmitance()
-# optical_system_pure.generate_gaussian(increment, virtual_steps, lambda_target, sample_space, cuttoff, show = True)
-# optical_system_pure.convolve_system(show = True)
-# optical_system_pure.beat_pattern_pre_discretization(fabry_perot, c)
-# optical_system_pure.discretize_system(resolution, increment, virtual_steps, show = True)
-# optical_system_pure.gauss_peaks(show = True)
-# optical_system_pure.beat_pattern(fabry_perot, c, show = True)
 
-# we assume the reflectance does not vary with incident angle
-# neutral_density = Realistic_Filter(whitelight,filter_thickness, R1 = R_nd, \
-#                                     path_length = path_nd, semi_diameter = semi_nd)
-# neutral_density.plot_transmitance()
-    
-# optical_system_extended = Optical_System(whitelight,  fabry_perot,real_filter, neutral_density)
-# optical_system_extended.plot_transmitance()
-# optical_system_extended.generate_gaussian(increment, virtual_steps, lambda_target, sample_space, cuttoff, show = True)
-# optical_system_extended.convolve_system(show = True)
-# optical_system_extended.discretize_system(resolution, increment, virtual_steps, show = True)
-# optical_system_extended.gauss_peaks(show = True)
-# optical_system_extended.beat_pattern(fabry_perot, c, show = True)
 
-# optical_system_nd = Optical_System(whitelight, fabry_perot,neutral_density)
-# optical_system_nd.plot_transmitance()
-# optical_system_nd.generate_gaussian(increment, virtual_steps, lambda_target, sample_space, cuttoff, show = True)
-# optical_system_nd.convolve_system(show = True)
-# optical_system_nd.discretize_system(resolution, increment, virtual_steps, show = True)
-# optical_system_nd.gauss_peaks(show = True)
-# optical_system_nd.beat_pattern(fabry_perot, c, show = True)
+#neutral density filter subsystem
+neutral_density = Realistic_Filter(whitelight,filter_thickness, R1 = R_nd, \
+                                    path_length = path_nd, semi_diameter = semi_nd)
+#Realistic system + neutral density filter effects    
+optical_system_extended = Optical_System(whitelight,  fabry_perot,real_filter, neutral_density)
+optical_system_extended.plot_transmitance()
+optical_system_extended.generate_gaussian(increment, virtual_steps, lambda_target, sample_space, cuttoff, show = True)
+optical_system_extended.convolve_system(show = True)
+optical_system_extended.discretize_system(resolution, increment, virtual_steps, show = True)
+optical_system_extended.gauss_peaks(show = True)
+optical_system_extended.beat_pattern(fabry_perot, c, show = True)
+
+#Isolated effects of neutral density system
+optical_system_nd = Optical_System(whitelight, fabry_perot,neutral_density)
+optical_system_nd.plot_transmitance()
+optical_system_nd.generate_gaussian(increment, virtual_steps, lambda_target, sample_space, cuttoff, show = True)
+optical_system_nd.convolve_system(show = True)
+optical_system_nd.discretize_system(resolution, increment, virtual_steps, show = True)
+optical_system_nd.gauss_peaks(show = True)
+optical_system_nd.beat_pattern(fabry_perot, c, show = True)
     
