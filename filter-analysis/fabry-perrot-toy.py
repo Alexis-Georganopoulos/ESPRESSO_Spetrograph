@@ -11,10 +11,10 @@ import scipy.signal as sci
 import scipy.stats as stat
 from scipy.special import erf
 from scipy.optimize import curve_fit
-#import scipy.integrate as intgr
 from astropy.modeling import models, fitting
 #import time
-from tqdm import tqdm
+import OpticalSystems as opsys
+
 #import psf_analyzer as PSF
 
 #ordered_data = PSF.ordered_data
@@ -35,70 +35,23 @@ lambda_max = lambda_target + lambda_deviation
 
 increment = (lambda_max-lambda_min)/virtual_steps
 
-##white light generator(min/max INCLUSIVE, closed interval)
-def white_light_generator(lambda_min, lambda_max, lambda_divisions):
-    difference = lambda_max - lambda_min
-    increment = difference/lambda_divisions
-    return np.arange(lambda_min, lambda_max+ increment, increment)
 
-whitelight = white_light_generator(lambda_min, lambda_max, virtual_steps)
+whitelight = opsys.white_light_generator(lambda_min, lambda_max, virtual_steps)
 
 
 #%%Light filter before entering fabry_perot
 
 filter_thickness = 2e-3#1e-3 #temporary, we would like to change this
 my_tilt = 1*2 *np.pi/180 # +ve ->counter-clockwise tilt, -ve ->clockwise tilt
-##we model the transmitance directly as a sinusoid
-def filter_transmitance(lambda_range,filter_thickness, \
-                        theta = 0, n = 1, percentage = 0.05, peak = 1):
 
-    delta = (2*np.pi/lambda_range)*2*n*filter_thickness*np.cos(theta)
-    amplitude = peak*percentage
-    wave = (np.sin(delta/2))**2
-    return amplitude*wave+1-amplitude
 
-#The value of R also seems to change with wavelength, default argument may 
-#be wrong.. Check data sheet of 800FL07-12.5
-#from datasheet: transmitance @600nm ~ 0.9
-#reflectance of glass ~ 0.04(= R2) -> T_glass ~ 0.96
-#-> T_filter = 0.9 = T_coating * T_glass
-#-> T_coating ~ 0.9/0.96 = 0.9375 -> R_caoting(= R1) = 1 - 0.9375 = 0.0625
-def accurate_filter_transmitance(lambda_range,filter_thickness, \
-                                 path_length = 56.547e-3, semi_diameter = 1.129e-3, \
-                                 n = 1, R1 = 0.0625, R2 = 0.04, tilt = 0):
-    
-    def _mini_fabry_perot(theta, one_lambda):
-        delta = (2*np.pi/one_lambda)*2*n*filter_thickness*np.cos(theta)
-        geomean = np.sqrt(R1*R2)
-        
-        numerator = (1 - R1)*(1 - R2)
-        denominator = (1-geomean)**2 + 4*geomean*(np.sin(delta/2)**2)
-        transmitance = numerator/denominator
-        return transmitance
-    
-    transmitance_array = []
-    theta_upper = np.arctan(semi_diameter/path_length)
-    theta_lower = -theta_upper
-    theta_upper, theta_lower = (tilt + x for x in (theta_upper, theta_lower))
-    #####
-    divisions = 100
-    theta_increment = (theta_upper - theta_lower)/divisions
-    theta_integral_vector = np.arange(theta_lower, theta_upper+theta_increment, theta_increment)
-    for wavelength in tqdm(lambda_range):
-        #####Trapezoidal Integration
-        I = _mini_fabry_perot(theta_integral_vector, wavelength)
-        I = (np.sum(I) - (I[0]+I[-1])/2)*theta_increment
-        #I = intgr.trapz(I, dx = theta_increment) # If you want to be more "proper"
-        transmitance_array.append(I)
 
-    transmitance_array /= np.max(transmitance_array)
-    return transmitance_array
 
 #transmitance_filter = accurate_filter_transmitance(whitelight, filter_thickness, n = 1.5)
 #temp = transmitance_filter
-transmitance_filter = filter_transmitance(whitelight, filter_thickness, \
+transmitance_filter = opsys.filter_transmitance(whitelight, filter_thickness, \
                                            n = 1.5, percentage=0.05)
-accurate_transmitance_filter = accurate_filter_transmitance(whitelight, filter_thickness, path_length=43.718e-3,\
+accurate_transmitance_filter = opsys.accurate_filter_transmitance(whitelight, filter_thickness, path_length=43.718e-3,\
                                                             semi_diameter=0.993e-3, n = 1.5, R1= 0.63947, tilt=my_tilt)    
 # transmitance_filter = temp
 
