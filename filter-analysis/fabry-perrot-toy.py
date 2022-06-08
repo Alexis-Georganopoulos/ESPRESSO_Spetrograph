@@ -8,11 +8,6 @@ Created on Tue Mar  9 11:13:34 2021
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as sci
-
-from scipy.special import erf
-from scipy.optimize import curve_fit
-from astropy.modeling import models, fitting
-#import time
 import OpticalSystems as opsys
 
 #import psf_analyzer as PSF
@@ -264,8 +259,6 @@ plt.show()
 #%%Discretisation
 wavelength_resolution = lambda_target/130000/3
 
-
-
 pure_discretized_convolution, pure_edges = opsys.discretize(whitelight, pure_convolution, \
                                             wavelength_resolution, lambda_max, lambda_min)
 
@@ -334,122 +327,46 @@ plt.plot(1e9*acc_edges, acc_discretized_convolution, 'ro')
 plt.plot(1e9*acc_edges[acc_disc_peaks], acc_discretized_convolution[acc_disc_peaks], 'bo')
 plt.plot(1e9*acc_edges[acc_disc_valleys], acc_discretized_convolution[acc_disc_valleys], 'go')
 
-def gauss_model(peaks, valleys, d_conv, edg, vtol = 0, show = True, perfect = perfect_lambda, weights = False):
-    mean_package = []
-    std_package = []
-    if show: plt.figure()
-    for i in range(len(valleys)-1):
-        indices = np.arange(valleys[i],valleys[i+1]+1,1)
-        indices = indices[d_conv[indices] > vtol*(d_conv[indices].max())]
-        x = edg[indices]
-        y = d_conv[indices]
-        mu = (x[-1]-x[0])/2 + x[0]
-        sigma = abs(x[0]-x[-1])/10 #this denominator is arbitrary
-        
-        #carefull how you initialise! it is sensitive
-        g_init = models.Gaussian1D(amplitude=1., mean=mu, stddev=sigma)
-        
-        fit_g = fitting.LevMarLSQFitter()
-        #TODO
-        #WEIGHTS FOR GAUSSIAN
-        if weights:
-            g = fit_g(g_init, x, y, weights=np.array(y)**2)#1/np.sqrt(np.array(y)))
-        else:
-            g = fit_g(g_init, x, y)
-        dummy_x = np.arange(x[0],x[-1], 1e-14)
-        if show: 
-            #dummy_perfect = [1 for i in range(len(perfect))]
-            plt.plot(x,y,'*', dummy_x,g(dummy_x), g.mean.value, g.amplitude.value, 'bo')# perfect, dummy_perfect,'ro',
-        mean_package.append(g.mean.value)
-        std_package.append(g.stddev.value)
-    if show:
-        plt.xlabel("Wavelength [nm]")
-        plt.ylabel("Transmission")
-        plt.grid()
-        plt.show()
-    return mean_package, std_package
-        
-pure_gmeans, pure_gstd = gauss_model(pure_disc_peaks, pure_disc_valleys, pure_discretized_convolution, \
-                                     pure_edges, vtol=0.05, show = True, perfect = perfect_lambda[1:-1])
-pure_gmeans_w, pure_gstd_w = gauss_model(pure_disc_peaks, pure_disc_valleys, pure_discretized_convolution, \
-                                     pure_edges, vtol=0.05, show = True, perfect = perfect_lambda[1:-1], weights=True)
-   
-gmeans, gstd = gauss_model(disc_peaks, disc_valleys, discretized_convolution, \
-                          edges, vtol = 0.05, show = True, perfect = perfect_lambda[1:-1])
-gmeans_w, gstd_w = gauss_model(disc_peaks, disc_valleys, discretized_convolution, \
-                          edges, vtol = 0.05, show = True, perfect = perfect_lambda[1:-1], weights=True)
 
-acc_gmean, acc_gstd = gauss_model(acc_disc_peaks, acc_disc_valleys, acc_discretized_convolution,\
+        
+pure_gmeans, pure_gstd = opsys.gauss_model(pure_disc_peaks, pure_disc_valleys, pure_discretized_convolution, \
+                                     pure_edges, vtol=0.05, show = True, perfect = perfect_lambda[1:-1])
+pure_gmeans_w, pure_gstd_w = opsys.gauss_model(pure_disc_peaks, pure_disc_valleys, pure_discretized_convolution, \
+                                     pure_edges, vtol=0.05, show = True, perfect = perfect_lambda[1:-1], weights=1)
+   
+gmeans, gstd = opsys.gauss_model(disc_peaks, disc_valleys, discretized_convolution, \
+                          edges, vtol = 0.05, show = True, perfect = perfect_lambda[1:-1])
+gmeans_w, gstd_w = opsys.gauss_model(disc_peaks, disc_valleys, discretized_convolution, \
+                          edges, vtol = 0.05, show = True, perfect = perfect_lambda[1:-1], weights=1)
+
+acc_gmean, acc_gstd = opsys.gauss_model(acc_disc_peaks, acc_disc_valleys, acc_discretized_convolution,\
                                   acc_edges, vtol = 0.05, show = True, perfect = perfect_lambda[1:-1])
-acc_gmean_w, acc_gstd_w = gauss_model(acc_disc_peaks, acc_disc_valleys, acc_discretized_convolution,\
-                                  acc_edges, vtol = 0.05, show = True, perfect = perfect_lambda[1:-1], weights=True)
+acc_gmean_w, acc_gstd_w = opsys.gauss_model(acc_disc_peaks, acc_disc_valleys, acc_discretized_convolution,\
+                                  acc_edges, vtol = 0.05, show = True, perfect = perfect_lambda[1:-1], weights=1)
 del dummy
 #%%ERF model
 #@custom_model
-def erfunc(x, mFL =0, a=0, b=1,c=0):
-    return mFL*erf((x-a)/(b*np.sqrt(2))) + c
 
-def erf_model(peaks, valleys, d_conv, edg, means, stds, vtol = 0, show = True, weights = False, perfect = perfect_lambda):
-    mean_package = []
-    if show: plt.figure()
-    for i in range(len(valleys)-1):
-        indices = np.arange(valleys[i],valleys[i+1]+1,1)
-        indices = indices[d_conv[indices] > vtol*(d_conv[indices].max())]
-        x = edg[indices]
-        y = d_conv[indices]
-        global increment
-        global gmeans
-        global whitelight
-        #x_adj = x + increment/2 
-        my_erf = [0]
-        for j in range(len(y)-1):
-            temp = increment*(y[j]+y[j+1])/2 + my_erf[j]
-            my_erf.append(temp)
-        del my_erf[0]
-        x = np.delete(x,0)
-        
-        # print(len(my_erf))
-        # print(len(x))
-        if weights:
-            # erf_init = erfunc(mFL = 1e-16, a = means[i], b = stds[i], c = 0 )
-            # fit_erf = fitting.LevMarLSQFitter()
-            # erf = fit_erf(erf_init, x, my_erf)
-            # plt.plot(x,my_erf,'*',x,erf(x))
-            #mean_package.append(erf.)
-            #TODO
-            #WEIGHTS FOR ERF
-            erf_sigma = np.array(y[1:])**2#(1/np.sqrt(np.array(y[1:])))
-            #erf_sigma = np.sqrt(1/np.array(my_erf))
-            params, extras = curve_fit(erfunc, x, my_erf, p0 = [1e-16,means[i],stds[i], 0], \
-                                       sigma = erf_sigma, method='lm')#std = 0.4e-6
-            plt.plot(x,my_erf,'*',x,erfunc(x, *params))#params[1] are the means
-            mean_package.append(params[1])
-        else:
-            params, extras = curve_fit(erfunc, x, my_erf, p0 = [1e-16,means[i],stds[i], 0], method='lm')#std = 0.4e-6
-            plt.plot(x,my_erf,'*',x,erfunc(x, *params))#params[1] are the means
-            mean_package.append(params[1])
-    #     if show: 
-    #         #dummy_perfect = [1 for i in range(len(perfect))]
-    #         plt.plot(x,y,'*', dummy_x,g(dummy_x), g.mean.value, g.amplitude.value, 'bo')# perfect, dummy_perfect,'ro',
-    #     mean_package.append(g.mean.value)
-    if show:
-        plt.xlabel("Wavelength [nm]")
-        plt.ylabel("Sampled erf(not normalised)")
-        plt.grid()
-        plt.show()
-    return mean_package
-    # return mean_package
+
+
+
 #acc_gmean_erf = erf_model(acc_disc_peaks, acc_disc_valleys, acc_discretized_convolution, acc_edges, vtol = 0.2, show = True, perfect = perfect_lambda[1:-1])
 
-pure_gmeans_erf= erf_model(pure_disc_peaks, pure_disc_valleys, pure_discretized_convolution, pure_edges,\
-                      pure_gmeans, pure_gstd, vtol = 0.3, show = True, perfect = perfect_lambda[1:-1])
+pure_gmeans_erf= opsys.erf_model(pure_disc_peaks, pure_disc_valleys, \
+                                 pure_discretized_convolution, pure_edges,\
+                                 pure_gmeans, pure_gstd, vtol = 0.3, \
+                                 show = True, incr = increment)
     
-pure_gmeans_erf_w = erf_model(pure_disc_peaks, pure_disc_valleys, pure_discretized_convolution, pure_edges,\
-                      pure_gmeans_w, pure_gstd_w, vtol = 0.3, show = True, weights=True, perfect = perfect_lambda[1:-1])
+pure_gmeans_erf_w = opsys.erf_model(pure_disc_peaks, pure_disc_valleys, \
+                                    pure_discretized_convolution, pure_edges,\
+                                    pure_gmeans_w, pure_gstd_w, vtol = 0.3, \
+                                    show = True, weights=1, incr = increment)
     
 
-acc_gmean_erf_w = erf_model(acc_disc_peaks, acc_disc_valleys, acc_discretized_convolution, acc_edges,\
-                      acc_gmean_w, acc_gstd_w, vtol = 0.3, show = True, weights=True, perfect = perfect_lambda[1:-1])
+acc_gmean_erf_w = opsys.erf_model(acc_disc_peaks, acc_disc_valleys, \
+                                  acc_discretized_convolution, acc_edges,\
+                                  acc_gmean_w, acc_gstd_w, vtol = 0.3, \
+                                  show = True, weights=1, incr = increment)
 
     
                                       
@@ -584,7 +501,7 @@ acc_g_aligned_erf_peaks_w_analytic = peak_allignment(acc_gmean_erf_w, perfect_la
 
 #del c
 #%%
-plt.close('all')
+#plt.close('all')
 
 #%%plots for thesis
 

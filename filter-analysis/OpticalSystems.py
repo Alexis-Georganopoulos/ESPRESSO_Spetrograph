@@ -5,7 +5,11 @@ Created on Tue Jun  7 22:09:42 2022
 @author: User
 """
 import numpy as np
+import matplotlib.pyplot as plt
 import scipy.stats as stat
+from astropy.modeling import models, fitting
+from scipy.special import erf
+from scipy.optimize import curve_fit
 from tqdm import tqdm
 
 ###################### OPTICAL SYSYTEM FUNCTIONS ##############################
@@ -74,7 +78,8 @@ def accurate_filter_transmitance(lambda_range,filter_thickness, \
     return transmitance_array
 
 # realistic model of a neutral density filter
-def neutral_density(lambda_range, R1, filter_thickness = 2e-3, n = 1.5, R2 = 0.04, theta = 0):
+def neutral_density(lambda_range, R1, filter_thickness = 2e-3,\
+                    n = 1.5, R2 = 0.04, theta = 0):
     
     delta = (2*np.pi/lambda_range)*2*n*filter_thickness*np.cos(theta)
     geomean = np.sqrt(R1*R2)
@@ -99,6 +104,9 @@ def analytic_fabry_perot_peaks(lower, upper, etalon, n = 1,theta = 0):
         
         perfect_lambda.append(new_lamnda)
         
+###############################################################################
+        
+#################### UTILITY AND MODELING FUNCTIONS ###########################        
 def gaussian(cuttoff, sample_space, target, upper, lower, steps):
 
     gaussian_resolution = target/sample_space #the FWHM we want
@@ -129,6 +137,98 @@ def discretize(lambda_range, y_value, resolution, upper, lower):
     edges = np.delete(edges, -1)
     
     return statistic, edges
+
+def gauss_model(peaks, valleys, d_conv, edg, perfect, vtol = 0, show = True , weights = 0):
+    #"show", "perfect" variables mainly used for debugging
+    mean_package = []
+    std_package = []
+    if show: plt.figure()
+    for i in range(len(valleys)-1):
+        indices = np.arange(valleys[i],valleys[i+1]+1,1)
+        indices = indices[d_conv[indices] > vtol*(d_conv[indices].max())]
+        x = edg[indices]
+        y = d_conv[indices]
+        mu = (x[-1]-x[0])/2 + x[0]
+        sigma = abs(x[0]-x[-1])/10 #this denominator is arbitrary
+        
+        #carefull how you initialise! it is sensitive
+        g_init = models.Gaussian1D(amplitude=1., mean=mu, stddev=sigma)
+        
+        fit_g = fitting.LevMarLSQFitter()
+
+        if weights == 0:
+            g = fit_g(g_init, x, y)
+        elif weights == 1:
+            g = fit_g(g_init, x, y, weights=np.array(y)**2)
+        elif weights == 2:
+            g = fit_g(g_init, x, y, weights=1/np.sqrt(np.array(y)))
+        else:
+            raise Warning("invalid weight in gauss_model")
+            
+        dummy_x = np.arange(x[0],x[-1], 1e-14)
+        if show: 
+            #dummy_perfect = [1 for i in range(len(perfect))]
+            plt.plot(x,y,'*', dummy_x,g(dummy_x), g.mean.value, g.amplitude.value, 'bo')# perfect, dummy_perfect,'ro',
+        mean_package.append(g.mean.value)
+        std_package.append(g.stddev.value)
+    if show:
+        plt.xlabel("Wavelength [nm]")
+        plt.ylabel("Transmission")
+        plt.grid()
+        plt.show()
+    return mean_package, std_package
+
+def erf_model(peaks, valleys, d_conv, edg, means, stds, incr, vtol = 0, show = True, weights = False):
+    
+    mean_package = []
+    
+    def _erfunc(x, mFL =0, a=0, b=1,c=0):
+        return mFL*erf((x-a)/(b*np.sqrt(2))) + c
+    
+    if show: plt.figure()
+    for i in range(len(valleys)-1):
+        indices = np.arange(valleys[i],valleys[i+1]+1,1)
+        indices = indices[d_conv[indices] > vtol*(d_conv[indices].max())]
+        x = edg[indices]
+        y = d_conv[indices]
+        #x_adj = x + incr/2 
+        my_erf = [0]
+        for j in range(len(y)-1):
+            temp = incr*(y[j]+y[j+1])/2 + my_erf[j]
+            my_erf.append(temp)
+        del my_erf[0]
+        x = np.delete(x,0)
+        
+        # print(len(my_erf))
+        # print(len(x))
+        
+        if weights == 0:
+            my_sig = np.array(y[1:])
+        elif weights == 1:
+            my_sig = np.array(y[1:])**2
+        elif weights == 2:
+            my_sig = (1/np.sqrt(np.array(y[1:])))
+        else:
+            raise Warning("invalid weight in erf_model")
+            
+        params, extras = curve_fit(_erfunc, x, my_erf, \
+                                   p0 = [1e-16,means[i],stds[i], 0], \
+                                   sigma = my_sig, method='lm')#std = 0.4e-6
+        plt.plot(x,my_erf,'*',x,_erfunc(x, *params))#params[1] are the means
+        mean_package.append(params[1])
+
+            # erf_init = _erfunc(mFL = 1e-16, a = means[i], b = stds[i], c = 0 )
+            # fit_erf = fitting.LevMarLSQFitter()
+            # erf = fit_erf(erf_init, x, my_erf)
+            # plt.plot(x,my_erf,'*',x,erf(x))
+            #mean_package.append(erf.)
+
+    if show:
+        plt.xlabel("Wavelength [nm]")
+        plt.ylabel("Sampled erf(not normalised)")
+        plt.grid()
+        plt.show()
+    return mean_package
 
 ###############################################################################
 
