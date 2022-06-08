@@ -52,13 +52,13 @@ def accurate_filter_transmitance(lambda_range,filter_thickness, \
         transmitance = numerator/denominator
         return transmitance
     
-    def deg2rad (deg):
+    def _deg2rad (deg):
         return deg*2 *np.pi/180
     
     transmitance_array = []
     theta_upper = np.arctan(semi_diameter/path_length)
     theta_lower = -theta_upper
-    theta_upper, theta_lower = (deg2rad(tilt_deg) + x for x in (theta_upper, theta_lower))
+    theta_upper, theta_lower = (_deg2rad(tilt_deg) + x for x in (theta_upper, theta_lower))
     #####
     divisions = 100
     theta_increment = (theta_upper - theta_lower)/divisions
