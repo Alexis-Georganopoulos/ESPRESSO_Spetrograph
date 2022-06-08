@@ -64,7 +64,6 @@ def accurate_filter_transmitance(lambda_range,filter_thickness, \
     theta_upper = np.arctan(semi_diameter/path_length)
     theta_lower = -theta_upper
     theta_upper, theta_lower = (_deg2rad(tilt_deg) + x for x in (theta_upper, theta_lower))
-    #####
     divisions = 100
     theta_increment = (theta_upper - theta_lower)/divisions
     theta_integral_vector = np.arange(theta_lower, theta_upper+theta_increment, theta_increment)
@@ -121,11 +120,7 @@ def gaussian(cuttoff, sample_space, target, upper, lower, steps):
     exp_gauss = exp_gauss[indexes]
     #gauss = mag_gauss*exp_gauss
     xrange = xrange[indexes]
-    # plt.figure()
-    # plt.plot(xrange, exp_gauss)
-    # plt.show()
     return exp_gauss, xrange
-    #return gauss, xrange
     
 def discretize(lambda_range, y_value, resolution, upper, lower):
 
@@ -191,17 +186,13 @@ def erf_model(peaks, valleys, d_conv, edg, means, stds, incr, vtol = 0, show = T
         indices = indices[d_conv[indices] > vtol*(d_conv[indices].max())]
         x = edg[indices]
         y = d_conv[indices]
-        #x_adj = x + incr/2 
         my_erf = [0]
         for j in range(len(y)-1):
             temp = incr*(y[j]+y[j+1])/2 + my_erf[j]
             my_erf.append(temp)
         del my_erf[0]
         x = np.delete(x,0)
-        
-        # print(len(my_erf))
-        # print(len(x))
-        
+
         if weights == 0:
             my_sig = np.array(y[1:])
         elif weights == 1:
@@ -216,12 +207,6 @@ def erf_model(peaks, valleys, d_conv, edg, means, stds, incr, vtol = 0, show = T
                                    sigma = my_sig, method='lm')#std = 0.4e-6
         plt.plot(x,my_erf,'*',x,_erfunc(x, *params))#params[1] are the means
         mean_package.append(params[1])
-
-            # erf_init = _erfunc(mFL = 1e-16, a = means[i], b = stds[i], c = 0 )
-            # fit_erf = fitting.LevMarLSQFitter()
-            # erf = fit_erf(erf_init, x, my_erf)
-            # plt.plot(x,my_erf,'*',x,erf(x))
-            #mean_package.append(erf.)
 
     if show:
         plt.xlabel("Wavelength [nm]")

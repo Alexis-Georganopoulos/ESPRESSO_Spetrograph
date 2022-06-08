@@ -10,46 +10,28 @@ import matplotlib.pyplot as plt
 import scipy.signal as sci
 import OpticalSystems as opsys
 
-#import psf_analyzer as PSF
 
-#ordered_data = PSF.ordered_data
-
-use_external_kernel = False
-
-if use_external_kernel:
-    pass
-else:
-    
-    virtual_steps = 1000000 #just how many increments we want for some range of numbers
-    lambda_target = 600e-9 #[m]
-    lambda_deviation = 0.3e-9 #[m]this varies depending on application    0.3e-9
-
+virtual_steps = 1000000 #just how many increments we want for some range of numbers
+lambda_target = 600e-9 #[m]
+lambda_deviation = 0.3e-9 #[m]this varies depending on application    0.3e-9
 
 lambda_min = lambda_target - lambda_deviation
 lambda_max = lambda_target + lambda_deviation
 
 increment = (lambda_max-lambda_min)/virtual_steps
 
-
 whitelight = opsys.white_light_generator(lambda_min, lambda_max, virtual_steps)
-
 
 #%%Light filter before entering fabry_perot
 
 filter_thickness = 2e-3#1e-3 #temporary, we would like to change this
 my_tilt = 2# +ve ->counter-clockwise tilt, -ve ->clockwise tilt
 
-
-
-
-#transmitance_filter = accurate_filter_transmitance(whitelight, filter_thickness, n = 1.5)
-#temp = transmitance_filter
 transmitance_filter = opsys.filter_transmitance(whitelight, filter_thickness, \
                                            n = 1.5, percentage=0.05)
 accurate_transmitance_filter = opsys.accurate_filter_transmitance(whitelight, filter_thickness, path_length=43.718e-3,\
                                                             semi_diameter=0.993e-3, n = 1.5, R1= 0.63947, tilt_deg= my_tilt)    
-# transmitance_filter = temp
-
+    
 plt.figure()
 #plt.plot(1e9*whitelight, transmitance_filter, label = 'Simplified Filter')
 plt.plot(1e9*whitelight, accurate_transmitance_filter, label = 'Realistic Filter')
