@@ -42,7 +42,7 @@ whitelight = opsys.white_light_generator(lambda_min, lambda_max, virtual_steps)
 #%%Light filter before entering fabry_perot
 
 filter_thickness = 2e-3#1e-3 #temporary, we would like to change this
-my_tilt = 1*2 *np.pi/180 # +ve ->counter-clockwise tilt, -ve ->clockwise tilt
+my_tilt = 2# +ve ->counter-clockwise tilt, -ve ->clockwise tilt
 
 
 
@@ -52,14 +52,14 @@ my_tilt = 1*2 *np.pi/180 # +ve ->counter-clockwise tilt, -ve ->clockwise tilt
 transmitance_filter = opsys.filter_transmitance(whitelight, filter_thickness, \
                                            n = 1.5, percentage=0.05)
 accurate_transmitance_filter = opsys.accurate_filter_transmitance(whitelight, filter_thickness, path_length=43.718e-3,\
-                                                            semi_diameter=0.993e-3, n = 1.5, R1= 0.63947, tilt=my_tilt)    
+                                                            semi_diameter=0.993e-3, n = 1.5, R1= 0.63947, tilt_deg= my_tilt)    
 # transmitance_filter = temp
 
 plt.figure()
 #plt.plot(1e9*whitelight, transmitance_filter, label = 'Simplified Filter')
 plt.plot(1e9*whitelight, accurate_transmitance_filter, label = 'Realistic Filter')
 plt.legend()
-plt.title("Transmitance of the light filter with "+str(round(my_tilt*180/np.pi,1))+" degrees tilt")
+plt.title("Transmitance of the light filter with "+str(my_tilt)+" degrees tilt")
 plt.xlabel("Wavelength [nm]")
 plt.ylabel("Transmitance")
 plt.grid()
@@ -70,17 +70,8 @@ del my_tilt
 #%% fabry-perrot
 etalon_spacing = 7.6e-3 ##+/- 5e-7 m
 
-##We assume for now that the finesse is constant for all lambda
-## in fact finesse changes by the incedent angle for each wavelength(not reflectance)
-def fabry_perot_transmitance(lambda_range, etalon_thickness, \
-                             n = 1, theta = 0, F = 12.27):
-    #F_coeff = 
-    delta = (2*np.pi/lambda_range)*2*n*etalon_thickness*np.cos(theta)
-    product = F*(np.sin(delta/2))**2
-    return 1/(1 + product) ##The transmitance
-
 #this also acts as the reference transmitance, not just for composing systems
-transmitance_fabry_perot = fabry_perot_transmitance(whitelight, etalon_spacing)
+transmitance_fabry_perot = opsys.fabry_perot_transmitance(whitelight, etalon_spacing)
 
 plt.figure()
 plt.plot(1e9*whitelight, transmitance_fabry_perot)
@@ -112,17 +103,8 @@ del etalon_spacing
 
 #Assuming normal incidence, air->Ni-Fe
 R1 = abs((1-2.2714)/(1+2.2714))**2
-def neutral_density(lambda_range, R1, filter_thickness = 2e-3, n = 1.5, R2 = 0.04, theta = 0):
-    
-    delta = (2*np.pi/lambda_range)*2*n*filter_thickness*np.cos(theta)
-    geomean = np.sqrt(R1*R2)
-    
-    numerator = (1 - R1)*(1 - R2)
-    denominator = (1-geomean)**2 + 4*geomean*(np.sin(delta/2)**2)
-    transmitance = numerator/denominator
-    return transmitance
 
-neutral_density_transmitance = neutral_density(whitelight, R1)
+neutral_density_transmitance = opsys.neutral_density(whitelight, R1)
 #%%filter + fabry perot
 #(system composition)
 fabry_perot = transmitance_fabry_perot#redundant, but the wording is consistent
