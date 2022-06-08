@@ -8,7 +8,7 @@ Created on Tue Mar  9 11:13:34 2021
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as sci
-import scipy.stats as stat
+
 from scipy.special import erf
 from scipy.optimize import curve_fit
 from astropy.modeling import models, fitting
@@ -81,29 +81,13 @@ plt.ylabel("Transmitance")
 plt.grid()
 plt.show()
 
-#for reference, the analytic peaks:
-def analytic_fabry_perot_peaks(lower = lambda_min, upper = lambda_max,etalon_spacing = 7.6e-3, n = 1,theta = 0):
-    k_high = int((2*n*etalon_spacing*np.cos(theta))/(upper))+1
-    k = k_high - 1
-    perfect_lambda = []
-    while True:
-        k = k + 1
-        new_lamnda = (2*n*etalon_spacing*np.cos(theta))/(k)
-        if new_lamnda < lower:
-            perfect_lambda.reverse()
-            perfect_lambda = np.asarray(perfect_lambda)
-            return perfect_lambda
-        
-        perfect_lambda.append(new_lamnda)
-        
-perfect_lambda = analytic_fabry_perot_peaks()
+perfect_lambda = opsys.analytic_fabry_perot_peaks(lambda_min, lambda_max, etalon_spacing)
 
 del etalon_spacing
 #%%Neutral Density Filter
 
 #Assuming normal incidence, air->Ni-Fe
 R1 = abs((1-2.2714)/(1+2.2714))**2
-
 neutral_density_transmitance = opsys.neutral_density(whitelight, R1)
 #%%filter + fabry perot
 #(system composition)
@@ -130,27 +114,9 @@ plt.show()
 gaussian_sample_space = 130000#also temporary, depending on what we want
 gauss_cuttoff = 0.001 #the percentage height at which ignore the rest of the gaussian
 
-def gaussian(cuttoff, sample_space):
 
-    gaussian_resolution = lambda_target/sample_space #the FWHM we want
-    sigma_guassian = gaussian_resolution/(2*np.sqrt(2*np.log(2)))
-
-    increment = (lambda_max-lambda_min)/virtual_steps
-    xrange = np.arange(-int(virtual_steps/2)*increment, \
-                       (int(virtual_steps/2)+1)*increment, increment)
-    #mag_gauss = (1/(np.sqrt(2*np.pi)*sigma_guassian))
-    exp_gauss = np.exp(-(xrange**2)/(2*sigma_guassian**2))
-    indexes = exp_gauss > cuttoff*np.max(exp_gauss)
-    exp_gauss = exp_gauss[indexes]
-    #gauss = mag_gauss*exp_gauss
-    xrange = xrange[indexes]
-    # plt.figure()
-    # plt.plot(xrange, exp_gauss)
-    # plt.show()
-    return exp_gauss, xrange
-    #return gauss, xrange
-
-gauss, dummy_x = gaussian(gauss_cuttoff, gaussian_sample_space)
+gauss, dummy_x = opsys.gaussian(gauss_cuttoff, gaussian_sample_space, lambda_target, \
+                          lambda_max, lambda_min, virtual_steps)
 plt.figure()
 plt.plot(1e9*dummy_x, gauss)
 plt.title("Unit Gaussian(Not normalised)")
@@ -298,24 +264,15 @@ plt.show()
 #%%Discretisation
 wavelength_resolution = lambda_target/130000/3
 
-def discretize(lambda_range, y_value, resolution):
 
-    statistic, edges, _ = stat.binned_statistic(lambda_range, y_value, \
-                                bins = int((lambda_max-lambda_min)/resolution))
 
-    for i in range(len(edges)-1):
-        edges[i] = (edges[i]+edges[i+1])/2
-    edges = np.delete(edges, -1)
-    
-    return statistic, edges
+pure_discretized_convolution, pure_edges = opsys.discretize(whitelight, pure_convolution, \
+                                            wavelength_resolution, lambda_max, lambda_min)
 
-pure_discretized_convolution, pure_edges = discretize(whitelight, pure_convolution, \
-                                            wavelength_resolution)
-
-discretized_convolution, edges = discretize(whitelight, simple_convolution, \
-                                            wavelength_resolution)
-acc_discretized_convolution, acc_edges = discretize(whitelight, accurate_convolution, \
-                                            wavelength_resolution)
+discretized_convolution, edges = opsys.discretize(whitelight, simple_convolution, \
+                                            wavelength_resolution, lambda_max, lambda_min)
+acc_discretized_convolution, acc_edges = opsys.discretize(whitelight, accurate_convolution, \
+                                            wavelength_resolution, lambda_max, lambda_min)
 
 plt.figure()
 plt.plot(1e9*whitelight, pure_convolution)

@@ -5,6 +5,7 @@ Created on Tue Jun  7 22:09:42 2022
 @author: User
 """
 import numpy as np
+import scipy.stats as stat
 from tqdm import tqdm
 
 ###################### OPTICAL SYSYTEM FUNCTIONS ##############################
@@ -82,6 +83,52 @@ def neutral_density(lambda_range, R1, filter_thickness = 2e-3, n = 1.5, R2 = 0.0
     denominator = (1-geomean)**2 + 4*geomean*(np.sin(delta/2)**2)
     transmitance = numerator/denominator
     return transmitance
+
+#for reference, the analytic peaks:
+def analytic_fabry_perot_peaks(lower, upper, etalon, n = 1,theta = 0):
+    k_high = int((2*n*etalon*np.cos(theta))/(upper))+1
+    k = k_high - 1
+    perfect_lambda = []
+    while True:
+        k = k + 1
+        new_lamnda = (2*n*etalon*np.cos(theta))/(k)
+        if new_lamnda < lower:
+            perfect_lambda.reverse()
+            perfect_lambda = np.asarray(perfect_lambda)
+            return perfect_lambda
+        
+        perfect_lambda.append(new_lamnda)
+        
+def gaussian(cuttoff, sample_space, target, upper, lower, steps):
+
+    gaussian_resolution = target/sample_space #the FWHM we want
+    sigma_guassian = gaussian_resolution/(2*np.sqrt(2*np.log(2)))
+
+    increment = (upper-lower)/steps
+    xrange = np.arange(-int(steps/2)*increment, \
+                       (int(steps/2)+1)*increment, increment)
+    #mag_gauss = (1/(np.sqrt(2*np.pi)*sigma_guassian))
+    exp_gauss = np.exp(-(xrange**2)/(2*sigma_guassian**2))
+    indexes = exp_gauss > cuttoff*np.max(exp_gauss)
+    exp_gauss = exp_gauss[indexes]
+    #gauss = mag_gauss*exp_gauss
+    xrange = xrange[indexes]
+    # plt.figure()
+    # plt.plot(xrange, exp_gauss)
+    # plt.show()
+    return exp_gauss, xrange
+    #return gauss, xrange
+    
+def discretize(lambda_range, y_value, resolution, upper, lower):
+
+    statistic, edges, _ = stat.binned_statistic(lambda_range, y_value, \
+                                bins = int((upper-lower)/resolution))
+
+    for i in range(len(edges)-1):
+        edges[i] = (edges[i]+edges[i+1])/2
+    edges = np.delete(edges, -1)
+    
+    return statistic, edges
 
 ###############################################################################
 
