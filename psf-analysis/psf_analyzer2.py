@@ -7,13 +7,13 @@ Created on Mon May 31 08:45:25 2021
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+import os
 
 do_i_plot = True
 #PSF plots raw
 n_w = 9
 n_c = 12
-rootpath = 'C:/Users/User/Documents/EPFL/Robotics-2019_2020-Year 3/Masters Thesis/zemax_psf/'
+rootpath = os.path.dirname(__file__) +'/zemax_psf/'
 w_range = [i+1 for i in range(n_w)]
 lst = []
 
