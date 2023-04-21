@@ -8,6 +8,11 @@ Created on Tue Mar  9 11:13:34 2021
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as sci
+
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import OpticalSystems as opsys
 
 
@@ -541,7 +546,7 @@ plt.figure()
 #plt.plot(1e9*whitelight[fb_peaks[1:-1]], acc_g_aligned_peaks-acc_g_aligned_peaks.mean(), label = 'Python peaks, unweighted')
 #plt.plot(1e9*perfect_lambda[1:-1], acc_g_aligned_peaks_analytic, label = 'Analytic peaks, unweighted')
 plt.plot(1e9*whitelight[acc_conv_peaks[1:-1]], acc_aligned_peaks[1:-1], label = 'Not discretized')#Python peaks, 
-plt.plot(1e9*whitelight[fb_peaks[1:-1]], acc_g_aligned_erf_peaks_w_analytic-acc_g_aligned_erf_peaks.mean(), label = 'Weight = '+my_weight)#Python peaks, 
+# plt.plot(1e9*whitelight[fb_peaks[1:-1]], acc_g_aligned_erf_peaks_w_analytic-acc_g_aligned_erf_peaks.mean(), label = 'Weight = '+my_weight)#Python peaks, 
 plt.title("")
 plt.legend()
 plt.xlabel("Wavelength [nm]")
