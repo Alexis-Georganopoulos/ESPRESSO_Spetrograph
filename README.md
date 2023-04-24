@@ -5,9 +5,7 @@ As such, great care must be taken at every step of the process. In the results o
 ![exoplanet_wobble](images/radial_speed.gif)
 
 More generaly, this concept of *radial speed* can be used as a metric to compare different types of systems. It is defined as:
-$$
-\rho = \frac{\Delta\lambda_{sig}}{\lambda_{ref}}
-$$
+$$ \rho = \frac{\Delta\lambda_{sig}}{\lambda_{ref}} $$
 In a general sense, it measures by what percentage a signal deviates from some reference.
 
 The work can be divided into two sections:
