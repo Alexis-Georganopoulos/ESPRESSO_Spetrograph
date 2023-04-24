@@ -40,9 +40,11 @@ Ultimately, we want to see how our reconstruction of the original Fabry-Perot pe
 
 The unit gaussian serves as a fixed transmittance function, which closely resembles the remaining optical setup (the rest of the setup was not deemed problematic).
 
-All the relevant code is in the [filter analysis](/filter-analysis/) folder. There is also a [deprecated](/filter-analysis/Deprecated-(but%20interesting)/) approach which does same, but using an `object oriented` approach. The latter was ultimately abandoned for development time reasons. There was no need for perfect repeatability once the results were produced.
+
 
 ### Implementation in Python
+
+All the relevant code is in the [filter analysis](/filter-analysis/) folder. There is also a [deprecated](/filter-analysis/Deprecated-(but%20interesting)/) approach which does same, but using an `object oriented` approach. The latter was ultimately abandoned for development time reasons. There was no need for perfect repeatability once the results were produced.
 
 The code is divided into two scripts: [fabry-perrot-toy.py](/filter-analysis/fabry-perrot-toy.py) and [OpticalSystems.py](/filter-analysis/OpticalSystems.py).
 The latter defines most of the optical system related functions used by the former, and the former serves as the driver code where we actually run the experiments and see the results.
