@@ -17,6 +17,7 @@ The work can be divided into two sections:
     - [Context](#context)
     - [Implementation in Python](#implementation-in-python)
   - [Optical cabale light transfer from an Echelle grating](#optical-cabale-light-transfer-from-an-echelle-grating)
+    - [Context](#context-1)
 
 
 ## Spurious effects on a Fabry-Perot interferometer
@@ -51,4 +52,9 @@ The latter defines most of the optical system related functions used by the form
 
 
 
+
+
 ## Optical cabale light transfer from an Echelle grating
+
+### Context
+![psf](images/psf.gif)
