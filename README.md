@@ -57,4 +57,5 @@ The latter defines most of the optical system related functions used by the form
 ## Optical cabale light transfer from an Echelle grating
 
 ### Context
+As light propagates through a telescope, many systematic errors can slowly pile up in the spectral domain. Of interest here, is the response of the telescope to different reference sources. In other words, how does the **Point Spread Function**(PSF) of the telescope interact with two references: a Fabry-Perot, and a Laser Frequency Comb?
 ![psf](images/psf.gif)
