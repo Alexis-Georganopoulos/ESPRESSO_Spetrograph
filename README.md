@@ -1,4 +1,4 @@
-# Consoslidating data from the ESSPRESO sprectrograph
+# Consoslidating data from the ESSPRESO spectrograph
 The search for exoplanets in astronomy requires especially precise equipment and measurement. Over stellar distances, the smallest errors can propagate into vastly different measurements. <br>
 As such, great care must be taken at every step of the process. In the results of this thesis, we focus on how two specific processes affect the **radial speed** of planetary measurement. We look into the spurious effects of a Fabry-Perrot interferometer, and the effect of optical fibre geometry/material properties on wavelengths of Echelle-grated light.
 
@@ -12,7 +12,7 @@ In a general sense, it measures by what percentage a signal deviates from some r
 
 The work can be divided into two sections:
 
-- [Consoslidating data from the ESSPRESO sprectrograph](#consoslidating-data-from-the-esspreso-sprectrograph)
+- [Consoslidating data from the ESSPRESO spectrograph](#consoslidating-data-from-the-esspreso-spectrograph)
   - [Spurious effects on a Fabry-Perot interferometer](#spurious-effects-on-a-fabry-perot-interferometer)
     - [Context](#context)
     - [Implementation in Python](#implementation-in-python)
