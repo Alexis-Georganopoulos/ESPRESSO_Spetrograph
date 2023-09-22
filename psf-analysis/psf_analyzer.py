@@ -14,6 +14,7 @@ do_i_plot = True
 n_w = 9
 n_c = 12
 rootpath = os.path.dirname(__file__) +'/zemax_psf/'
+
 w_range = [i+1 for i in range(n_w)]
 lst = []
 
@@ -25,33 +26,29 @@ del i
 del w_range
 del rootpath
 
-
-#first row of psfs
-psf_all = []
-if do_i_plot:
-    plt.figure(figsize = (18,6))
-for i,f in enumerate(lst):
-    data = np.loadtxt(f,skiprows=17)
-    psf_all.append(data)
-    if do_i_plot:
-        plt.subplot(n_c,n_w,1+i)
-        plt.imshow(data,extent = [-150,150,-150,150])
-        
-psf_all = []
+#quick inspection
 if do_i_plot:
     plt.figure(figsize = (18,6))
     plt.title('Fibre PSFs for Order 1')
 for i,f in enumerate(lst):
     data = np.loadtxt(f,skiprows=17)
-    psf_all.append(data)
     if do_i_plot and (i in [5,6,7,8]):
         plt.subplot(1,n_w-5,1+i-5)
         plt.imshow(data,extent = [-100,100,-100,100])
         plt.title('Wavelength '+str(i+1))
-        
     if i == 8:
         break
-plt.tight_layout()
+if do_i_plot:    
+    plt.tight_layout()
+
+#first row of psfs
+psf_all = []
+for i,f in enumerate(lst):
+    data = np.loadtxt(f,skiprows=17)
+    psf_all.append(data)
+        
+
+
     
 #del n_w
 #del n_c
@@ -62,7 +59,7 @@ del data
 del lst
 #plt.close('all')
 #%%Dispersion plots
-rootpath = 'C:/Users/User/Documents/EPFL/Robotics-2019_2020-Year 3/Masters Thesis/zemax_psf/RayTrace_Iterate.txt'
+rootpath = rootpath = os.path.dirname(__file__)+'/zemax_psf/RayTrace_Iterate.txt'
 data = np.loadtxt(rootpath, skiprows = 9)
 orders = [((i)*n_w) for i in range(n_c)]
 #data format:
@@ -73,6 +70,7 @@ y = data[order:order+9, 1]
 x = data[order:order+9, 2]
 
 #8th degree polynomial creates the required accuracy
+#test plot
 if do_i_plot:
     plt.figure()
     plt.grid('on')
@@ -115,11 +113,6 @@ del x
 del y
 del yp
 #plt.close('all')
-# p = np.polyfit(x, y, 8)
-
-# yp = np.polyval(p,x)
-
-# plt.plot(x,(yp-y)/y, '-*')
 
 #%%Kernel generation & centroid calculation
 psf_x_collapsed = []
@@ -140,6 +133,7 @@ del weightedx
 x = [i for i in range(100)]
 y = psf_x_collapsed[107]
 
+#test plot
 if do_i_plot:
     
     plt.figure()
@@ -180,6 +174,7 @@ del p
 del x
 del yp
 
+#test plot
 if do_i_plot:
     plt.figure()
     plt.plot(psf_w_collapsed[-1]*(1e3), psf_x_collapsed[-1])
@@ -188,7 +183,7 @@ if do_i_plot:
     plt.ylabel('Relative luminal intensity')
     plt.title('Kernel for order 12, wavelength 9')
 
-#%%Formatting the data to use it in other modules(avoiding to save as text file)
+#%%Formatting the data to use it in other modules
 ordered_data = []
 
 for i in range(n_c):
