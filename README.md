@@ -16,7 +16,7 @@ The work can be divided into two sections:
   - [Spurious effects on a Fabry-Perot interferometer](#spurious-effects-on-a-fabry-perot-interferometer)
     - [Context](#context)
     - [Implementation in Python](#implementation-in-python)
-  - [Optical cabale light transfer from an Echelle grating](#optical-cabale-light-transfer-from-an-echelle-grating)
+  - [Optical cable light transfer from an Echelle grating](#optical-cable-light-transfer-from-an-echelle-grating)
     - [Context](#context-1)
 
 
@@ -54,7 +54,7 @@ The latter defines most of the optical system related functions used by the form
 
 
 
-## Optical cabale light transfer from an Echelle grating
+## Optical cable light transfer from an Echelle grating
 
 ### Context
 As light propagates through a telescope, many systematic errors can slowly pile up in the spectral domain. Of interest here, is the response of the telescope to different reference sources. In other words, how does the **Point Spread Function**(PSF) of the telescope interact with two references: a Fabry-Perot, and a Laser Frequency Comb?
