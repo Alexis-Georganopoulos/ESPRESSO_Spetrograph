@@ -10,6 +10,7 @@ import scipy.interpolate as interp
 import scipy.signal as sci
 
 from tqdm import tqdm
+import os
 
 import psf_analyzer as PSF
 
@@ -17,6 +18,7 @@ ordered_data = PSF.ordered_data#units in m
 n_wavelengths = PSF.n_w#the number of wavelengths in a single order
 n_configurations = PSF.n_c#the number of orders
 
+#%%
 do_i_plot = True
 
 virtual_steps = 1000000 #just how many increments we want for some range of numbers
